@@ -13,7 +13,8 @@ end
 
 results = {}
 versions.each do |version|
-  ruby = "#{root_dir}/install/#{version}/bin/ruby"
+  bin_dir = "#{root_dir}/install/#{version}/bin"
+  ruby = "#{bin_dir}/ruby"
 
   ruby.sub!(/bin.ruby/, 'bin/rbx') if version =~ /rubinius/
 
@@ -23,10 +24,14 @@ versions.each do |version|
   cmd.sub!(/#{ENV['HOME']}/, '~')
   puts "CMD     = #{cmd}"
   puts
-  system ruby, *ARGV
+  child = fork do
+    ENV['PATH'] = bin_dir + ':' + ENV['PATH']
+    exec ruby, *ARGV
+  end
+  dummy, status = *Process.waitpid2(child)
   puts
-  puts "RESULT = #{$?}"
-  results[version] = $?
+  puts "RESULT = #{status.exitstatus.inspect}"
+  results[version] = status.exitstatus
 end
 
 passed, failed = results.keys.partition { |v| results[v] == 0 }
