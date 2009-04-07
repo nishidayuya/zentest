@@ -28,8 +28,7 @@ $TESTING = false unless defined? $TESTING
 #
 #   Autotest.add_hook hook_name { |autotest| ... }
 #
-# The available hooks are: initialize, run, run_command, ran_command,
-#   red, green, updated, all_good, reset, interrupt, and quit.
+# The available hooks are listed in +ALL_HOOKS+.
 #
 # See example_dot_autotest.rb for more details.
 #
@@ -62,8 +61,8 @@ class Autotest
 
   T0 = Time.at 0
 
-  ALL_HOOKS = [ :all_good, :initialize, :interrupt, :quit, :ran_command,
-                :reset, :run_command, :waiting ]
+  ALL_HOOKS = [ :all_good, :died, :green, :initialize, :interrupt, :quit,
+                :ran_command, :red, :reset, :run_command, :updated, :waiting ]
 
   HOOKS = Hash.new { |h,k| h[k] = [] }
   unless defined? WINDOZE then
@@ -154,6 +153,7 @@ class Autotest
                 :results,
                 :sleep,
                 :tainted,
+                :testlib,
                 :find_directories,
                 :unit_diff,
                 :wants_to_quit)
@@ -168,18 +168,19 @@ class Autotest
     @test_mappings = []
 
     self.completed_re = /\d+ tests, \d+ assertions, \d+ failures, \d+ errors/
-    self.extra_class_map = {}
-    self.extra_files = []
+    self.extra_class_map   = {}
+    self.extra_files       = []
     self.failed_results_re = /^\s+\d+\) (?:Failure|Error):\n(.*?)\((.*?)\)/
-    self.files_to_test = new_hash_of_arrays
-    self.find_order = []
-    self.known_files = nil
-    self.libs = %w[. lib test].join(File::PATH_SEPARATOR)
-    self.order = :random
-    self.output = $stderr
-    self.sleep = 1
-    self.find_directories = ['.']
-    self.unit_diff = "unit_diff -u"
+    self.files_to_test     = new_hash_of_arrays
+    self.find_order        = []
+    self.known_files       = nil
+    self.libs              = %w[. lib test].join(File::PATH_SEPARATOR)
+    self.order             = :random
+    self.output            = $stderr
+    self.sleep             = 1
+    self.testlib          = "test/unit"
+    self.find_directories  = ['.']
+    self.unit_diff         = "unit_diff -u"
 
     self.add_mapping(/^lib\/.*\.rb$/) do |filename, _|
       possible = File.basename(filename).gsub '_', '_?'
@@ -221,6 +222,8 @@ class Autotest
       end
     end
     hook :quit
+  rescue Exception
+    hook :died
   end
 
   ##
@@ -429,8 +432,9 @@ class Autotest
     full, partial = reorder(files_to_test).partition { |k,v| v.empty? }
 
     unless full.empty? then
-      classes = full.map {|k,v| k}.flatten.uniq.join(' ')
-      cmds << "#{ruby} -I#{libs} -rtest/unit -e \"%w[#{classes}].each { |f| require f }\" | #{unit_diff}"
+      classes = full.map {|k,v| k}.flatten.uniq
+      classes.unshift testlib
+      cmds << "#{ruby} -I#{libs} -rubygems -e \"%w[#{classes.join(' ')}].each { |f| require f }\" | #{unit_diff}"
     end
 
     partial.each do |klass, methods|
