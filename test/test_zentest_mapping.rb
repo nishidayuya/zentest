@@ -1,6 +1,7 @@
-require 'test/unit' unless defined? $ZENTEST and $ZENTEST
-
 $TESTING = true
+
+require 'rubygems'
+require 'minitest/autorun'
 
 require 'zentest_mapping' unless defined? $ZENTEST
 
@@ -9,7 +10,7 @@ class Dummy
   include ZenTestMapping
 end
 
-class TestZentestMapping < Test::Unit::TestCase
+class TestZentestMapping < MiniTest::Unit::TestCase
   def setup
     @tester = Dummy.new
   end

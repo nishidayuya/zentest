@@ -20,14 +20,10 @@ end
 $ZENTEST = true
 $TESTING = true
 
-require 'test/unit/testcase' # helps required modules
-
 class Module
-
   def zentest
     at_exit { ZenTest.autotest(self) }
   end
-
 end
 
 ##
@@ -56,7 +52,7 @@ end
 
 class ZenTest
 
-  VERSION = '3.11.1'
+  VERSION = '4.0.0'
 
   include ZenTestMapping
 
@@ -120,7 +116,7 @@ class ZenTest
   end
 
   # Get the public instance, class and singleton methods for
-  # class klass. If full is true, include the methods from 
+  # class klass. If full is true, include the methods from
   # Kernel and other modules that get included.  The methods
   # suite, new, pretty_print, pretty_print_cycle will not
   # be included in the resuting array.
@@ -207,7 +203,7 @@ class ZenTest
     return name
   end
 
-  # Does all the work of finding a class by name, 
+  # Does all the work of finding a class by name,
   # obtaining its methods and those of its superclass.
   # The full parameter determines if all the methods
   # including those of Object and mixed in modules
@@ -422,7 +418,7 @@ class ZenTest
     end # @klasses[klassname]
   end
 
-  def test_to_normal(name, klassname=nil)
+  def test_to_normal(_name, klassname=nil)
     super do |name|
       if defined? @inherited_methods then
         known_methods = (@inherited_methods[klassname] || {}).keys.sort.reverse
@@ -449,7 +445,7 @@ class ZenTest
     meth.push indentunit*indent + "end"
     return meth
   end
-   
+
   # Walk each known class and test that each method has
   # a test method
   # Then do it in the other direction...
