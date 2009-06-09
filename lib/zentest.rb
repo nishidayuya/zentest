@@ -1,8 +1,10 @@
 
-require 'zentest_mapping'
-
 $stdlib = {}
-ObjectSpace.each_object(Module) { |m| $stdlib[m.name] = true }
+ObjectSpace.each_object(Module) do |m|
+  $stdlib[m.name] = true if m.respond_to? :name
+end
+
+require 'zentest_mapping'
 
 $:.unshift( *$I.split(/:/) ) if defined? $I and String === $I
 $r = false unless defined? $r # reverse mapping for testclass names
@@ -17,7 +19,6 @@ if $r then
   require f if test ?f, f
 end
 
-$ZENTEST = true
 $TESTING = true
 
 class Module
@@ -52,7 +53,7 @@ end
 
 class ZenTest
 
-  VERSION = '4.0.0'
+  VERSION = '4.1.0'
 
   include ZenTestMapping
 
@@ -475,7 +476,8 @@ class ZenTest
 
     if @missing_methods.size > 0 then
       @result.push ""
-      @result.push "require 'test/unit' unless defined? $ZENTEST and $ZENTEST"
+      @result.push "require 'test/unit/testcase'"
+      @result.push "require 'test/unit' if $0 == __FILE__"
       @result.push ""
     end
 
